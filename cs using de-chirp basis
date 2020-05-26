@@ -1,0 +1,35 @@
+clc;clear all;close all;
+c=3e+8;										% speed of light
+pi=3.1415926; 
+j=sqrt(-1);	
+
+Tp=10.e-2; 								% transmitted pulse width      
+fc=2.e+9;	 						   	% carrier frequency 
+Br=10.e+2;              % transmitted bandwidth
+Fs=20.e+2;             % A/D sample rate
+kr=Br/Tp;               % range chirp rate
+
+Tmin=0.1;Tmax=0.2;
+Nr=(Tmax-Tmin+Tp)*Fs;%Nr=2^nextpow2(Nr); 
+Ni=1:Nr;
+tr=linspace(-Tp/2+Tmin,Tp/2+Tmax,Nr);
+dt=(Tmax-Tmin+Tp)/Nr;
+
+x =exp(-j*kr*(tr-0.182).^2)+exp(-j*kr*(tr-0.12).^2);
+%figure;plot((real(x)))
+
+%--------
+refer=exp(j*kr*(tr).^2);
+Psi0=fft(eye(Nr))/sqrt(Nr);
+for aa=1:Nr
+    Psi0(aa,:)=Psi0(aa,:).*refer;
+end
+
+M=fix(Nr/2);K=20;
+Phi=randn(M,Nr);                      %  测量矩阵(高斯分布白噪声) 
+s1=Phi*x.';                                    %  获得线性测量 
+T0=Phi*(Psi0)';                     
+hat_y0=omp(s1,T0,K,0); 
+
+figure;
+plot((abs(hat_y0)));title('CS result of using dechirp-basis');
